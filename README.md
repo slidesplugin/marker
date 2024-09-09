@@ -2,6 +2,8 @@
 
 此插件可以幫助你在[slides](https://github.com/CarsonSlovoka/slides)之中標記
 
+[Playground](https://slidesplugin.github.io/marker/playground/)
+
 ## USAGE
 
 | Hotkey | Desc. |
