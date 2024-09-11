@@ -95,11 +95,26 @@ function initMarker() {
     toolbar.style.backgroundColor = '#fff'
     toolbar.style.border = '1px solid #ccc'
     toolbar.style.padding = '10px'
-    toolbar.style.cursor = 'move'
+
+    toolbar.style.resize = 'both' // 讓工具列可以調整大小 // 這個會與mousemove相衝
+    // toolbar.style.cursor = 'move' // 改用header來拖動
+    toolbar.style.overflow = 'auto' // 防止內容超出邊界
+
+    const toolbarHeader = document.createElement('div')
+    toolbar.append(toolbarHeader) // 把header加到工具列
+    toolbarHeader.style.cursor = 'move' // 只允許從header拖動
+    toolbarHeader.style.backgroundColor = '#ddd'
+    toolbarHeader.style.padding = '5px'
+
+    // 將x放到右邊去
+    toolbarHeader.style.display = "flex"
+    toolbarHeader.style.justifyContent = "space-between"
+
+    toolbarHeader.innerText = '✍️'
 
     let offsetX, offsetY, isDragging = false
 
-    toolbar.addEventListener('mousedown', (e) => {
+    toolbarHeader.addEventListener('mousedown', (e) => {
       isDragging = true
       offsetX = e.clientX - toolbar.offsetLeft
       offsetY = e.clientY - toolbar.offsetTop
@@ -134,6 +149,7 @@ function initMarker() {
       colorButton.addEventListener('click', () => {
         currentColor = color
         ctx.strokeStyle = currentColor
+        ctx.globalAlpha = alphaValue
         isErasing = false
       })
       toolbar.append(colorButton)
@@ -148,8 +164,10 @@ function initMarker() {
 
     const exitButton = document.createElement('button')
     exitButton.innerHTML = 'x'
+    exitButton.style.right = "0"
+    exitButton.style.color = 'red'
     exitButton.addEventListener('click', exitMarkingMode)
-    toolbar.append(exitButton)
+    toolbarHeader.append(exitButton)
 
     document.body.appendChild(toolbar)
   }
