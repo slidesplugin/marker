@@ -17,6 +17,11 @@ function initMarker() {
   let isErasing = false
   let drawingHistory = {} // 保存每一頁投影片的畫圖結果
 
+  // 紀錄toolBar的位置
+  let toolbarTop = 10
+  let toolbarLeft = 10
+
+
   // let backgroundImage; // 使橡皮擦擦去的地方，是進入標記模式時最初的背景顏色
   // let originalUserSelect // 將圖層拉到上面，就選不到了，不需要特別調整userSelect
 
@@ -85,11 +90,39 @@ function initMarker() {
   function createToolbar() {
     toolbar = document.createElement('div')
     toolbar.style.position = 'absolute'
-    toolbar.style.top = '10px'
-    toolbar.style.left = '10px'
+    toolbar.style.top = `${toolbarTop}px`
+    toolbar.style.left = `${toolbarLeft}px`
     toolbar.style.backgroundColor = '#fff'
     toolbar.style.border = '1px solid #ccc'
     toolbar.style.padding = '10px'
+    toolbar.style.cursor = 'move'
+
+    let offsetX, offsetY, isDragging = false
+
+    toolbar.addEventListener('mousedown', (e) => {
+      isDragging = true
+      offsetX = e.clientX - toolbar.offsetLeft
+      offsetY = e.clientY - toolbar.offsetTop
+      toolbar.style.cursor = 'grabbing'
+    })
+
+    document.addEventListener('mousemove', (e) => {
+      if (isDragging) {
+        const left = e.clientX - offsetX
+        const top = e.clientY - offsetY
+        toolbar.style.left = `${left}px`
+        toolbar.style.top = `${top}px`
+
+        // 使得下一次開啟還能把toolbar放到之前的位子
+        toolbarLeft = left
+        toolbarTop = top
+      }
+    })
+
+    document.addEventListener('mouseup', () => {
+      isDragging = false
+      toolbar.style.cursor = 'move'
+    })
 
     const colors = ['#000', '#f00', '#0f0', '#00f']
     colors.forEach(color => {
