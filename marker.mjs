@@ -106,6 +106,8 @@ function initMarker() {
     if (savedWidth && savedHeight) {
       toolbar.style.width = savedWidth
       toolbar.style.height = savedHeight
+    } else {
+      toolbar.style.width = '90px' // 使用比較窄一點,讓solid旁邊就放highlight顏色
     }
     // 監控大小變化，並將其保存到本地存儲
     toolbar.addEventListener('mouseup', () => {
@@ -179,25 +181,15 @@ function initMarker() {
       toolbar.append(colorButton)
     }
 
-    // 添加實心顏色按鈕
-    const solidColors = [
-      '#000',
-      '#ffff00',
-      '#f00',
-      '#0f0',
-      '#00f',
+    // colors: solid, highlight
+    const colors = [
+      ['#000', 1], ['rgba(0, 0, 0, 0.1)',0.1],
+      ['#ffff00',1], ['rgba(255, 255, 0, 0.2)', 0.2], // 黃色比較不明顯要比較深
+      ['#f00',1],['rgba(255, 0, 0, 0.1)',0.1],
+      ['#0f0',1],['rgba(0, 255, 0, 0.1)',0.1],
+      ['#00f',1],['rgb(187,239,255)',0.1],
     ]
-    solidColors.forEach(color => createColorButton(color, 1.0))
-
-    // 添加螢光筆顏色按鈕
-    const highlightColors = [
-      ['rgba(0, 0, 0, 0.1)',0.1],
-      ['rgba(255, 255, 0, 0.2)', 0.2], // 黃色比較不明顯要比較深
-      ['rgba(255, 0, 0, 0.1)',0.1],
-      ['rgba(0, 255, 0, 0.1)',0.1],
-      ['rgba(0, 0, 255, 0.1)',0.1]
-    ]
-    highlightColors.forEach(([color,alpha]) => createColorButton(color, alpha))
+    colors.forEach(([color,alpha]) => createColorButton(color, alpha))
 
     const eraserButton = document.createElement('button')
     eraserButton.innerHTML = '🗞️'
