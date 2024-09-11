@@ -40,6 +40,10 @@ function initMarker() {
     ctx.strokeStyle = currentColor
     ctx.lineWidth = 5
 
+    // 使線條更加平滑
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
     canvas.addEventListener('mousedown', startDrawing)
     canvas.addEventListener('mousemove', draw)
     canvas.addEventListener('mouseup', stopDrawing)
@@ -152,8 +156,8 @@ function initMarker() {
       toolbar.style.cursor = 'move'
     })
 
-    const colors = ['#000', '#f00', '#0f0', '#00f']
-    colors.forEach(color => {
+    // 函數：創建顏色按鈕
+    function createColorButton(color, alpha = 1.0) {
       const colorButton = document.createElement('button')
       colorButton.style.backgroundColor = color
       colorButton.style.width = '30px'
@@ -161,12 +165,39 @@ function initMarker() {
       colorButton.style.margin = '5px'
       colorButton.addEventListener('click', () => {
         currentColor = color
-        ctx.strokeStyle = currentColor
-        ctx.globalAlpha = alphaValue
+        ctx.strokeStyle = color
+        ctx.globalAlpha = alpha
         isErasing = false
+
+        // 如果是螢光筆，增加筆劃寬度
+        if (alpha<1) {
+          ctx.lineWidth = 25 // 螢光筆較粗
+        } else {
+          ctx.lineWidth = 5 // 普通筆劃
+        }
       })
       toolbar.append(colorButton)
-    })
+    }
+
+    // 添加實心顏色按鈕
+    const solidColors = [
+      '#000',
+      '#ffff00',
+      '#f00',
+      '#0f0',
+      '#00f',
+    ]
+    solidColors.forEach(color => createColorButton(color, 1.0))
+
+    // 添加螢光筆顏色按鈕
+    const highlightColors = [
+      ['rgba(0, 0, 0, 0.1)',0.1],
+      ['rgba(255, 255, 0, 0.2)', 0.2], // 黃色比較不明顯要比較深
+      ['rgba(255, 0, 0, 0.1)',0.1],
+      ['rgba(0, 255, 0, 0.1)',0.1],
+      ['rgba(0, 0, 255, 0.1)',0.1]
+    ]
+    highlightColors.forEach(([color,alpha]) => createColorButton(color, alpha))
 
     const eraserButton = document.createElement('button')
     eraserButton.innerHTML = '🗞️'
