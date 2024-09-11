@@ -200,7 +200,8 @@ function initMarker() {
 
   document.addEventListener('keydown', (e) => {
     if (e.key.toLowerCase() === 'm') {
-      enterMarkingMode()
+      // toggle
+      isMarking? exitMarkingMode() : enterMarkingMode()
     } else if (e.altKey && e.key.toLowerCase() === 'c') {
       clearCanvas()
     }
