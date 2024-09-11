@@ -1,6 +1,8 @@
+const ID = "slides-plugin-marker"
+
 export default {
-  init: () => (()=>({
-    id: "marker",
+  init: () => (() => ({
+    id: ID,
     init: () => {
       initMarker()
     }
@@ -13,11 +15,15 @@ function initMarker() {
   let toolbar
   let currentColor = '#000'
   let isErasing = false
+  let drawingHistory = {} // 保存每一頁投影片的畫圖結果
+
   // let backgroundImage; // 使橡皮擦擦去的地方，是進入標記模式時最初的背景顏色
   // let originalUserSelect // 將圖層拉到上面，就選不到了，不需要特別調整userSelect
 
   function createCanvas() {
+    document.querySelector(`canvas#${ID}`)?.remove() // 確保舊的內容可以被刪除
     canvas = document.createElement('canvas')
+    canvas.id = ID
     canvas.style.position = 'absolute'
     canvas.style.top = "0"
     canvas.style.left = "0"
@@ -32,6 +38,7 @@ function initMarker() {
     canvas.addEventListener('mousedown', startDrawing)
     canvas.addEventListener('mousemove', draw)
     canvas.addEventListener('mouseup', stopDrawing)
+    canvas.addEventListener('mouseout', stopDrawing)
 
     // 讓backgroundImage的內容，為一開始都還沒有被編輯過的canvas
     // 這有一個問題，根本無從得知一開始的圖像，因為這是一張空白的圖像，除非用html2canvas把一開始進入的內容變成圖像
@@ -48,7 +55,7 @@ function initMarker() {
   }
 
   function draw(e) {
-    if (!canvas.isDrawing) {
+    if (!isMarking || !canvas.isDrawing) {
       return
     }
     if (isErasing) {
@@ -72,6 +79,7 @@ function initMarker() {
 
   function stopDrawing() {
     canvas.isDrawing = false
+    saveDrawing()
   }
 
   function createToolbar() {
@@ -95,7 +103,7 @@ function initMarker() {
         ctx.strokeStyle = currentColor
         isErasing = false
       })
-      toolbar.appendChild(colorButton)
+      toolbar.append(colorButton)
     })
 
     const eraserButton = document.createElement('button')
@@ -103,19 +111,29 @@ function initMarker() {
     eraserButton.addEventListener('click', () => {
       isErasing = true
     })
-    toolbar.appendChild(eraserButton)
+    toolbar.append(eraserButton)
 
     const exitButton = document.createElement('button')
     exitButton.innerHTML = 'x'
     exitButton.addEventListener('click', exitMarkingMode)
-    toolbar.appendChild(exitButton)
+    toolbar.append(exitButton)
 
     document.body.appendChild(toolbar)
   }
 
   function enterMarkingMode() {
     if (!isMarking) {
-      createCanvas()
+      if (globalThis.Reveal) {
+        const id = getCurSlideID()
+        if (id && drawingHistory[id]) {
+          // 用之前畫過的canvas來取代
+          restoreDrawing()
+        } else {
+          createCanvas()
+        }
+      } else if (!canvas){
+        createCanvas()
+      }
       createToolbar()
 
       canvas.style.zIndex = "100" // 讓canvas畫出來的內容能保持在最上層
@@ -129,7 +147,10 @@ function initMarker() {
 
   function exitMarkingMode() {
     if (isMarking) {
-      document.body.removeChild(canvas)
+      canvas.style.zIndex = -1000 // 讓其沒辦法被選到
+      if (globalThis.Reveal) {
+        delete drawingHistory[Reveal.getCurrentSlide().id]
+      }
       document.body.removeChild(toolbar)
       isMarking = false
       // document.body.style.userSelect = originalUserSelect
@@ -138,13 +159,54 @@ function initMarker() {
 
   function clearCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (globalThis.Reveal) {
+      delete drawingHistory[Reveal.getCurrentSlide().id]
+    }
+    saveDrawing()
+  }
+
+  function getCurSlideID() {
+    if (!globalThis.Reveal) {
+      return undefined
+    }
+    const {h, v, f} = Reveal.getIndices() // h, v, f
+    return `${h}.${v}.${f??""}`
+  }
+
+  function saveDrawing() {
+    const id = getCurSlideID()
+    if (id) {
+      drawingHistory[id] = canvas.toDataURL()
+    }
+  }
+
+  function restoreDrawing() {
+    const id = getCurSlideID()
+    if (!id) {
+      return
+    }
+    if (drawingHistory[id]) {
+      // 表示之前已經有內容存在
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+      const img = new Image()
+      img.onload = () => {
+        ctx.drawImage(img, 0, 0)
+      }
+      img.src = drawingHistory[id]
+    } else {
+      ctx?.clearRect(0, 0, canvas.width, canvas.height)
+    }
   }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'm') {
+    if (e.key.toLowerCase() === 'm') {
       enterMarkingMode()
-    } else if (e.altKey && e.key === 'c') {
+    } else if (e.altKey && e.key.toLowerCase() === 'c') {
       clearCanvas()
     }
   })
+
+  if (globalThis.Reveal) {
+    Reveal.addEventListener('slidechanged', restoreDrawing)
+  }
 }
