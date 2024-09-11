@@ -96,6 +96,19 @@ function initMarker() {
     toolbar.style.border = '1px solid #ccc'
     toolbar.style.padding = '10px'
 
+    // 讀取本地存儲的大小
+    const savedWidth = localStorage.getItem('slides.toolbarWidth')
+    const savedHeight = localStorage.getItem('slides.toolbarHeight')
+    if (savedWidth && savedHeight) {
+      toolbar.style.width = savedWidth
+      toolbar.style.height = savedHeight
+    }
+    // 監控大小變化，並將其保存到本地存儲
+    toolbar.addEventListener('mouseup', () => {
+      localStorage.setItem('slides.toolbarWidth', toolbar.style.width)
+      localStorage.setItem('slides.toolbarHeight', toolbar.style.height)
+    })
+
     toolbar.style.resize = 'both' // 讓工具列可以調整大小 // 這個會與mousemove相衝
     // toolbar.style.cursor = 'move' // 改用header來拖動
     toolbar.style.overflow = 'auto' // 防止內容超出邊界
