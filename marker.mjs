@@ -1,3 +1,5 @@
+// import debugListener from "./debug_listener.mjs"
+
 const ID = "slides-plugin-marker"
 
 export default {
@@ -9,7 +11,15 @@ export default {
   }))
 }
 
+function *genFlowID(start=0) {
+  for (let start=0;;start++) {
+    yield start
+  }
+}
+const getFlowID = genFlowID(0)
+
 function initMarker() {
+  // debugListener()
   let isMarking = false
   let canvas, ctx
   let toolbar
@@ -99,8 +109,9 @@ function initMarker() {
     toolbar.style.backgroundColor = '#fff'
     toolbar.style.border = '1px solid #ccc'
     toolbar.style.padding = '10px'
+    // const sessionID = getFlowID.next().value
 
-    // 讀取本地存儲的大小
+    // 讀取本地存儲來設定toolbar的尺寸
     const savedWidth = localStorage.getItem('slides.toolbarWidth')
     const savedHeight = localStorage.getItem('slides.toolbarHeight')
     if (savedWidth && savedHeight) {
@@ -141,6 +152,8 @@ function initMarker() {
     })
 
     document.addEventListener('mousemove', (e) => {
+      // console.log(sessionID)
+
       if (isDragging) {
         const left = e.clientX - offsetX
         const top = e.clientY - offsetY
@@ -221,7 +234,12 @@ function initMarker() {
       } else if (!canvas){
         createCanvas()
       }
-      createToolbar()
+
+      if (!toolbar) {
+        // 僅當toolbar不存在的時候才要新增，避免eventListener重複加
+        createToolbar()
+      }
+      toolbar.style.display = ""
 
       canvas.style.zIndex = "100" // 讓canvas畫出來的內容能保持在最上層
       toolbar.style.zIndex = "101" // toolbar的zIndex需大於canvas，否則會選不到
@@ -238,7 +256,9 @@ function initMarker() {
       if (globalThis.Reveal) {
         delete drawingHistory[Reveal.getCurrentSlide().id]
       }
-      document.body.removeChild(toolbar)
+      // document.body.removeChild(toolbar) // 避免重複創建toolbar
+      toolbar.style.display = "none"
+
       isMarking = false
       // document.body.style.userSelect = originalUserSelect
     }
