@@ -8,6 +8,7 @@ const config = {
     val: 10,
     max: 100,
     min: 5,
+    step: 5,
   },
   toolbarWidth: {
     id: "slides.toolbarWidth",
@@ -16,7 +17,21 @@ const config = {
   toolbarHeight: {
     id: "slides.toolbarHeight",
     val: null,
-  }
+  },
+  solidPenLineWidth: {
+    id: "slides.solidPenLineWidth",
+    val: 5,
+    max: 100,
+    min: 1,
+    step: 1,
+  },
+  highlightLineWidth: {
+    id: "slides.solidPenHighlightLineWidth",
+    val: 25,
+    max: 100,
+    min: 1,
+    step: 1,
+  },
 }
 
 export default {
@@ -44,6 +59,11 @@ function initConfig() {
   }
 }
 
+const PenMode = {
+  Solid: "solid",
+  Highlight: "highlight",
+}
+
 function initMarker() {
   // debugListener()
 
@@ -52,13 +72,15 @@ function initMarker() {
   let isMarking = false
   let canvas, ctx
   let toolbar
-  let currentColor = '#000'
   let isErasing = false
   let drawingHistory = {} // 保存每一頁投影片的畫圖結果
 
   // 紀錄toolBar的位置
   let toolbarTop = 10
   let toolbarLeft = 10
+
+  let penMode = ""
+
 
   // let backgroundImage; // 使橡皮擦擦去的地方，是進入標記模式時最初的背景顏色
   // let originalUserSelect // 將圖層拉到上面，就選不到了，不需要特別調整userSelect
@@ -75,8 +97,7 @@ function initMarker() {
     document.body.appendChild(canvas)
 
     ctx = canvas.getContext('2d')
-    ctx.strokeStyle = currentColor
-    ctx.lineWidth = 5
+    ctx.lineWidth = config.solidPenLineWidth.val
 
     // 使線條更加平滑
     ctx.lineCap = 'round'
@@ -204,16 +225,23 @@ function initMarker() {
       colorButton.style.height = '30px'
       colorButton.style.margin = '5px'
       colorButton.addEventListener('click', () => {
-        currentColor = color
+        if (alpha < 1) {
+          penMode = PenMode.Highlight
+        } else {
+          penMode = PenMode.Solid
+        }
+
         ctx.strokeStyle = color
         ctx.globalAlpha = alpha
         isErasing = false
 
         // 如果是螢光筆，增加筆劃寬度
         if (alpha<1) {
-          ctx.lineWidth = 25 // 螢光筆較粗
+          // 螢光筆
+          ctx.lineWidth = config.highlightLineWidth.val
         } else {
-          ctx.lineWidth = 5 // 普通筆劃
+          // 普通筆劃
+          ctx.lineWidth = config.solidPenLineWidth.val
         }
       })
       toolbar.append(colorButton)
@@ -236,8 +264,8 @@ function initMarker() {
     })
     toolbar.append(eraserButton)
 
-    function setSize(itemConfig, wheelEvent, step) {
-      const {id, max, min} = itemConfig
+    function setSize(itemConfig, wheelEvent) {
+      const {id, max, min, step} = itemConfig
       if (wheelEvent.deltaY < 0) {
         itemConfig.val = Math.min(max, itemConfig.val + step) // 增大
       } else {
@@ -247,9 +275,20 @@ function initMarker() {
     }
 
     document.addEventListener('wheel', (e) => {
-      if (e.shiftKey && isErasing) { // 確保按下 Shift 並且處於橡皮擦模式
+      if (e.shiftKey) {
         if (isErasing) {
-          setSize(config.eraserSize, e, 5)
+          setSize(config.eraserSize, e)
+          return
+        }
+        switch (penMode) {
+          case PenMode.Highlight:
+            setSize(config.highlightLineWidth, e)
+            ctx.lineWidth = config.highlightLineWidth.val // 使得不需要再重新選擇畫筆就能馬上應用
+            break
+          case PenMode.Solid:
+            setSize(config.solidPenLineWidth, e)
+            ctx.lineWidth = config.solidPenLineWidth.val
+            break
         }
       }
     })
