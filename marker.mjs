@@ -31,6 +31,7 @@ function initMarker() {
   let toolbarTop = 10
   let toolbarLeft = 10
 
+  let savedEraserSize = localStorage.getItem('slides.eraserSize') ?? 10
 
   // let backgroundImage; // 使橡皮擦擦去的地方，是進入標記模式時最初的背景顏色
   // let originalUserSelect // 將圖層拉到上面，就選不到了，不需要特別調整userSelect
@@ -86,7 +87,7 @@ function initMarker() {
       ctx.beginPath()
       const x = e.clientX
       const y = e.clientY
-      ctx.arc(x, y, 10, 0, Math.PI * 2)
+      ctx.arc(x, y, savedEraserSize, 0, Math.PI * 2)
       ctx.fill()
       ctx.globalCompositeOperation = "source-over"
     } else {
@@ -110,6 +111,9 @@ function initMarker() {
     toolbar.style.border = '1px solid #ccc'
     toolbar.style.padding = '10px'
     // const sessionID = getFlowID.next().value
+
+    const minEraserSize = 5
+    const maxEraserSize = 100
 
     // 讀取本地存儲來設定toolbar的尺寸
     const savedWidth = localStorage.getItem('slides.toolbarWidth')
@@ -210,6 +214,17 @@ function initMarker() {
       isErasing = true
     })
     toolbar.append(eraserButton)
+
+    document.addEventListener('wheel', (e) => {
+      if (e.shiftKey && isErasing) { // 確保按下 Shift 並且處於橡皮擦模式
+        if (e.deltaY < 0) {
+          savedEraserSize = Math.min(maxEraserSize, savedEraserSize + 5) // 增大橡皮擦
+        } else {
+          savedEraserSize = Math.max(minEraserSize, savedEraserSize - 5) // 減小橡皮擦
+        }
+        localStorage.setItem('slides.eraserSize',  savedEraserSize)
+      }
+    })
 
     const exitButton = document.createElement('button')
     exitButton.innerHTML = 'x'
