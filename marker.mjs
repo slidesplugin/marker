@@ -6,7 +6,7 @@ const config = {
   eraserSize: {
     id: "slides.eraserSize",
     val: 10,
-    max: 100,
+    max: 200,
     min: 5,
     step: 5,
   },
@@ -83,7 +83,7 @@ function initMarker() {
 
 
   // let backgroundImage; // 使橡皮擦擦去的地方，是進入標記模式時最初的背景顏色
-  // let originalUserSelect // 將圖層拉到上面，就選不到了，不需要特別調整userSelect
+  let originalUserSelect // 圖層拉到最頂，在iframe還是可能受到影響，所以要做此判斷
 
   function createCanvas() {
     document.querySelector(`canvas#${ID}`)?.remove() // 確保舊的內容可以被刪除
@@ -113,7 +113,7 @@ function initMarker() {
     // backgroundImage = new Image()
     // backgroundImage.src = canvas.toDataURL()
 
-    // originalUserSelect = document.body.style.userSelect
+    originalUserSelect = document.body.style.userSelect
   }
 
   function startDrawing(e) {
@@ -326,7 +326,7 @@ function initMarker() {
       canvas.style.zIndex = "100" // 讓canvas畫出來的內容能保持在最上層
       toolbar.style.zIndex = "101" // toolbar的zIndex需大於canvas，否則會選不到
 
-      // document.body.style.userSelect = 'none' // 選取模式會影響畫圖，所以進入標記模式時，要先關閉
+      document.body.style.userSelect = 'none' // 選取模式會影響畫圖，所以進入標記模式時，要先關閉
 
       isMarking = true
     }
@@ -342,7 +342,7 @@ function initMarker() {
       toolbar.style.display = "none"
 
       isMarking = false
-      // document.body.style.userSelect = originalUserSelect
+      document.body.style.userSelect = originalUserSelect
     }
   }
 
